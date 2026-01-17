@@ -8,7 +8,7 @@ def increment_state(c,b,omega_tab,param_cavity,param_time_evol, t):
     Parameters:
     c (np array): Coefficients in front of the states |1_k, 0>
     b (float): Atomic coefficient in front of the state |0, 1>
-    omega_tab (array): Array of containing two copies of the frequency modes.
+    omega_tab (np array): Array of containing two copies of the frequency modes.
     param_cavity: dictionnary of parameters {omega_0, gamma, L, T, dt}
     param_time_evol: dictionnary of parameters {T, dt, n_time_step}
     

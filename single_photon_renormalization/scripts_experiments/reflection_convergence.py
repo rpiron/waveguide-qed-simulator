@@ -15,12 +15,20 @@ from src.experiment import Experiment
 def run_reflection_convergence(param_photon, param_cavity, param_time_evol, uv_cutoff_values, store_results:bool=True, progress:bool=True):
 
     """
-    Docstring for run_reflection_convergence
+    Runs the reflection convergence experiment for different UV cutoff values.
     
-    :param param_photon: Description
-    :param param_cavity: Description
-    :param param_time_evol: Description
-    :param uv_cutoff_values: Description
+    Parameters:
+    param_photon (Dict) : Dictionary containing {'omega_p', 'delta_k', 'x_0'}
+    param_cavity (Dict) : Dictionary containing {'omega_0', 'gamma', 'L'}
+    param_time_evol (Dict) : Dictionary containing {'T', 'dt'}
+    uv_cutoff_values (np.array) : Array of UV cutoff values
+    store_results (bool) : Whether to store the results in a CSV file.
+    progress (bool) : Whether to display a progress bar.
+
+    Returns:
+    uv_cutoff_values (np.array) : Array of UV cutoff values used.
+    final_reflection_tab (np.array) : Array of final reflection values corresponding to each UV cutoff.
+
     """
 
     #prepare the array to store the results
