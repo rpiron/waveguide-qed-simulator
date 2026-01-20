@@ -11,7 +11,8 @@ sys.path.append(str(project_root))
 from src.xp_config import ExperimentConfig
 from src.experiment import Experiment
 
-def run_reflection_vs_frequency(param_photon_bis, param_cavity, param_time_evol, frequency_values, cutoffs, index_experiment=0, store_results:bool=True, progress:bool=True):
+def run_reflection_vs_frequency(param_photon_bis, param_cavity, param_time_evol, frequency_values, cutoffs, index_experiment=0, 
+                                store_results:bool=True, progress:bool=True):
 
     """
     Runs the reflection against frequency experiment for different photon central frequencies.
@@ -20,6 +21,7 @@ def run_reflection_vs_frequency(param_photon_bis, param_cavity, param_time_evol,
     param_photon_bis (Dict) : Dictionary containing only {'delta_k', 'x_0'}
     param_cavity (Dict) : Dictionary containing {'omega_0', 'gamma', 'L'}
     param_time_evol (Dict) : Dictionary containing {'T', 'dt'}
+    cutoffs (Dict) : Dictionary containing {'ir_cutoff', 'uv_cutoff'} 
     frequency_values (np.array) : Array of photon central frequency values
     index_experiment (int) : Index of the experiment if multiple are run in sequence.
     store_results (bool) : Whether to store the results in a CSV file.

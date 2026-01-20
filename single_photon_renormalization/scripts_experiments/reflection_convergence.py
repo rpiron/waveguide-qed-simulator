@@ -12,7 +12,8 @@ from src.xp_config import ExperimentConfig
 from src.experiment import Experiment
 
 
-def run_reflection_convergence(param_photon, param_cavity, param_time_evol, uv_cutoff_values, store_results:bool=True, progress:bool=True):
+def run_reflection_convergence(param_photon, param_cavity, param_time_evol, uv_cutoff_values, 
+                               store_results:bool=True, progress:bool=True):
 
     """
     Runs the reflection convergence experiment for different UV cutoff values.
