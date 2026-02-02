@@ -1,14 +1,15 @@
 # Waveguide QED Simulator
 
+## Overview
+
 This repository contains the code used to generate the results presented in the paper  
 **Renormalization Treatment of IR and UV Cutoffs in Waveguide QED and Implications to Numerical Model Simulation**.
 
 The core of the project is the `Experiment` class, which simulates single-photon scattering events on a two-level system (TLS).  
 Experiments are primarily driven from Jupyter notebooks, which are used both to generate the data and to visualize the results.
 
-Users may either reproduce the simulations or load the pre-generated data stored in CSV files and reproduce the figures directly from the notebooks.
-
-
+Users may either reproduce the simulations from scratch or load the pre-generated CSV data to reproduce the figures directly from the notebooks.
+*All simulations were run using the Conda environment provided in `environment.yml`.*
 
 ## Project structure
 
@@ -34,7 +35,30 @@ Users may either reproduce the simulations or load the pre-generated data stored
 
 ```
 
+## How to use
+
+### 1. Clone the repository
+```bash
+git clone https://github.com/rpiron/waveguide-qed-simulator.git
+cd waveguide-qed-simulator
+```
+### 2. Create the Conda environment
+This will install all required dependencies (Python, NumPy, SciPy, Jupyter, etc.) in a reproducible environment.
+```bash
+conda env create -f environment.yml
+conda activate single-photon-renorm
+```
+### 3. Launch Jupyter lab
+```bash
+jupyter lab
+```
+Then, navigate to
+```bash
+single_photon_renormalization/notebooks/
+```
+
 ## Associated paper
+Each notebook reproduces one or more figures of the associated paper.
 [arXiv:2601.15945](https://arxiv.org/abs/2601.15945)
 
 
