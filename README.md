@@ -26,10 +26,10 @@ Users may either reproduce the simulations from scratch or load the pre-generate
 │   │   ├── reflection_vs_frequency.py     # Reflection vs photon frequency for different frequency windows
 │   │   └── reflection_vs_rk_steps.py      # Convergence of reflection vs number of Runge–Kutta steps
 │   ├── notebooks/
-│   │   ├── experiment_class_example.ipynb
-│   │   ├── reflection_convergence_results.ipynb
-│   │   ├── reflection_vs_frequency_results.ipynb
-│   │   └── reflection_vs_rk_steps_results.ipynb
+│   │   ├── experiment_class_example.ipynb          # Results for Fig. 2 
+│   │   ├── reflection_convergence_results.ipynb    # Results for Fig. 3 
+│   │   ├── reflection_vs_frequency_results.ipynb   # Results for Figs. 4 and 5 
+│   │   └── reflection_vs_rgstep_results.ipynb      # Results for Fig. 7
 │   ├── results/
 │   │   ├── csv_files/   # Pre-generated CSV data from scripts_experiments
 │   │   └── figures/     # Figures presented in the paper
