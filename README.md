@@ -16,22 +16,23 @@ Users may either reproduce the simulations from scratch or load the pre-generate
 ```text
 .
 ├── src/
-│   ├── experiment.py                 # Definition of the Experiment class
-│   ├── rg_integrator.py              # Runge–Kutta integrator for the Schrödinger equation
-│   └── xp_config.py                  # Configuration associated with the Experiment class
+│   ├── __init__.py
+│   ├── experiment.py                  # Definition of the Experiment class
+│   ├── rk_integrator.py               # Runge–Kutta integrator for the Schrödinger equation
+│   └── experiment_config.py           # Configuration associated with the Experiment class
 ├── single_photon_renormalization/
 │   ├── scripts_experiments/
-│   │   ├── reflection_convergence.py     # Reflection coefficient at bare resonance vs UV cutoff
-│   │   ├── reflection_vs_frequency.py    # Reflection vs photon frequency for different frequency windows
-│   │   └── reflection_vs_rgstep.py       # Convergence of reflection vs number of Runge–Kutta time steps
+│   │   ├── reflection_convergence.py      # Reflection coefficient at bare resonance vs UV cutoff
+│   │   ├── reflection_vs_frequency.py     # Reflection vs photon frequency for different frequency windows
+│   │   └── reflection_vs_rk_steps.py      # Convergence of reflection vs number of Runge–Kutta steps
 │   ├── notebooks/
-│   │   ├── experiment_class_example.ipynb          # Results for Fig. 2
-│   │   ├── reflection_convergence_results.ipynb    # Results for Fig. 3
-│   │   ├── reflection_vs_frequency_results.ipynb   # Results for Figs. 4 and 5
-│   │   └── reflection_vs_rgstep_results.ipynb      # Results for Fig. 7
-│   └── results/
-│   │   ├── csv_files/  # Pre-generated CSV data from the files in script_experiments
-│   │   └── fig /       # Figures presented in the paper
+│   │   ├── experiment_class_example.ipynb
+│   │   ├── reflection_convergence_results.ipynb
+│   │   ├── reflection_vs_frequency_results.ipynb
+│   │   └── reflection_vs_rk_steps_results.ipynb
+│   ├── results/
+│   │   ├── csv_files/   # Pre-generated CSV data from scripts_experiments
+│   │   └── figures/     # Figures presented in the paper
 ├── environment.yml
 └── README.md
 
