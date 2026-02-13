@@ -1,6 +1,9 @@
 import numpy as np
+from scipy.optimize import root
 
-def get_bare_param(omega_A, Gamma, omega_ref, lbda, precision=1e-4):
+pi = np.pi
+
+def get_bare_param_n2(omega_A, Gamma, ir, uv, precision=1e-4):
     """
     Computes the bare parameters by inverting the renormalization relations
     (omega_0, gamma) = F(omega_A, Gamma, omega_ref, lbda)
@@ -8,8 +11,8 @@ def get_bare_param(omega_A, Gamma, omega_ref, lbda, precision=1e-4):
     Parameters:
     omega_A : physical transition frequency of the TLS
     Gamma : physical decay rate of the TLS
-    omega_ref : central fequency of the numerical frequency window
-    lbda : bandwith of the frequency window, defined as [IR, UV] = [omega_ref - lbda, omega_ref + lbda] 
+    ir: infrared cutoff of the spectral density
+    uv: ultraviolet cutoff of the spectral density
     precision : precision parameter for the dichotomy research
 
     Returns:
@@ -17,28 +20,141 @@ def get_bare_param(omega_A, Gamma, omega_ref, lbda, precision=1e-4):
     gamma : bare decay rate to parameterize the Hamiltonian
     """
     
-    ## Obtain the bare frequency
+    ##Express the bare decay as a function of omega_0
+    def adjust_gamma(x):
+        return Gamma / (1 - Gamma/(2*pi) * ((ir + omega_A - 2*x)/(ir - x)**2 - (uv + omega_A - 2*x)/(uv - x)**2))
 
-    #deviation from the central frequency
-    dwA = omega_A - omega_ref
-
-    #Initial guess : omega0 in [omega_ref - lbda, omega_ref + lbda] (equivalently, dw0 in [-lbda, lbda])
-    dw0_inf = -1*lbda 
-    dw0_sup = lbda
+    ## Obtain the bare frequenc by a dichtomy search
+    w0_inf = 1.01*ir
+    w0_sup = 0.99*uv
     residual_diff = np.inf
+    N_iter = 0
 
-    while np.abs(residual_diff) > precision: #research by dichotomy
+    while np.abs(residual_diff) > precision and N_iter < 1e4: #research by dichotomy
 
-        dw0_guess = 0.5*(dw0_inf + dw0_sup)
-        residual_diff = dwA - dw0_guess + Gamma /(2*np.pi) * np.log((lbda-dw0_guess)/(lbda+dw0_guess)) 
+        w0_guess = 0.5*(w0_inf + w0_sup)
+        gamma_guess = adjust_gamma(w0_guess)
+        residual_diff = -1*gamma_guess/(4*pi) * (1/(ir - w0_guess)**2 - 1/(uv - w0_guess)**2) * (Gamma**2 / 4 - (w0_guess - omega_A)**2) \
+                        - (1 + gamma_guess/(2*pi) * (1/(ir - w0_guess) - 1/(uv - w0_guess))) * (w0_guess - omega_A) \
+                        + gamma_guess / (2*pi) * np.log((uv - w0_guess)/(w0_guess - ir))
+
         if residual_diff > 0:
-            dw0_inf = dw0_guess
+            w0_inf = w0_guess
         else:
-            dw0_sup = dw0_guess
+            w0_sup = w0_guess
+        N_iter += 1
 
-    omega_0 = omega_ref + dw0_guess
+    #Last round needed to update gamma
+    gamma_guess = adjust_gamma(w0_guess)
 
-    ## Obtain the bare decay rate
-    gamma = 1/(1/Gamma + lbda / (np.pi*(lbda**2 - dw0_guess**2)))
+    if N_iter <= 1e4:
+        return w0_guess, gamma_guess
+    else:
+        return np.nan, np.nan
 
+
+def get_bare_param_n1(omega_A, Gamma, ir, uv, precision=1e-4):
+    """
+    Computes the bare parameters by inverting the renormalization relations
+    (omega_0, gamma) = F(omega_A, Gamma, omega_ref, lbda)
+    
+    Parameters:
+    omega_A : physical transition frequency of the TLS
+    Gamma : physical decay rate of the TLS
+    ir: infrared cutoff of the spectral density
+    uv: ultraviolet cutoff of the spectral density
+    precision : precision parameter for the dichotomy research
+
+    Returns:
+    omega_0 : bare frequency to parameterize the Hamiltonian
+    gamma : bare decay rate to parameterize the Hamiltonian
+    """
+    
+    ## Obtain the bare frequenc by a dichtomy search
+    w0_inf = 1.01*ir
+    w0_sup = 0.99*uv
+    residual_diff = np.inf
+    N_iter = 0
+
+    while np.abs(residual_diff) > precision and N_iter < 1e4: #research by dichotomy
+
+        w0_guess = 0.5*(w0_inf + w0_sup)
+        residual_diff = omega_A - w0_guess + Gamma /(2*pi) * np.log((uv - w0_guess) / (w0_guess - ir))
+
+        if residual_diff > 0:
+            w0_inf = w0_guess
+        else:
+            w0_sup = w0_guess
+        N_iter += 1
+
+    #Deduce gamma accordingly
+    gamma = Gamma / (1 - Gamma/(2*pi)*(1/(ir - w0_guess) - 1/(uv - w0_guess)))
+    
+    if N_iter <= 1e4:
+        return w0_guess, gamma
+    else:
+        return np.nan, np.nan
+
+
+def get_bare_param_n(omega_A, Gamma, ir, uv, n=1):
+    """
+    Computes the bare parameters by inverting the renormalization relations
+    (omega_0, gamma) = F(omega_A, Gamma, omega_ref, lbda)
+    
+    Parameters:
+    omega_A : physical transition frequency of the TLS
+    Gamma : physical decay rate of the TLS
+    ir: infrared cutoff of the spectral density
+    uv: ultraviolet cutoff of the spectral density
+    n : maximal n to keep in the alpha truncation
+
+    Returns:
+    omega_0 : bare frequency to parameterize the Hamiltonian
+    gamma : bare decay rate to parameterize the Hamiltonian
+    """
+
+    #n=0 serves as a baseline : no correction in the bare parameters
+    if n == 0:
+        omega_0 =  omega_A
+        gamma = Gamma
+
+    else:
+        #create the tab with the coefficients
+        def error_function(vars):
+
+            omega_0_guess, gamma_guess = vars
+            #Create the polynom 
+            alpha_tab = np.zeros(n+1, dtype=complex)
+            alpha_tab[0] = -gamma_guess/2 + 1j*gamma_guess/(2*pi)*np.log((uv-omega_0_guess)/(omega_0_guess - ir))
+
+            for i in range(1, n+1):
+                alpha_tab[i] = -np.exp(1j*(i-1)*pi/2) * gamma_guess / (2*i*pi) * \
+                            (1/(ir - omega_0_guess)**i - 1/(uv - omega_0_guess)**i)
+
+            alpha_tab[1] -= 1
+            
+            roots = np.roots(alpha_tab[::-1])
+
+            #Choose the root closer to the expected result
+            r = min(roots, key=lambda x: np.abs(x + Gamma/2 - 1j*(omega_0_guess - omega_A)))
+            
+            # error term
+            error = r + Gamma/2 - 1j*(omega_0_guess - omega_A)
+
+            return [np.real(error), np.imag(error)]
+        
+        try:
+            initial_guess = get_bare_param_n1(omega_A, Gamma, ir, uv)
+            sol = root(error_function, initial_guess, tol=1e-10)
+            
+            if not sol.success:
+                print("WARNING : Bare parameters search failed. Returning the n=1 solution.")
+                omega_0, gamma = initial_guess
+            else:
+                omega_0, gamma = sol.x
+
+        except Exception:
+            raise print("WARNING : Initial guess for the bare parameters failed.")
+            
+        
     return omega_0, gamma
