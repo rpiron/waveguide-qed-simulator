@@ -14,65 +14,50 @@ from src.bare_param import get_bare_param_n
 
 pi = np.pi
 
-def run_reflection_vs_n(omega_q, ir_tab, uv_tab, index_omega_q = 0, n=1, 
-                         store_results:bool=True, progress:bool=True):
+def run_reflection_vs_n(param_photon, param_cavity_physical, param_time_evol, cutoffs, n_tab,
+                         index_omega_q = 0, index_experiment=0, store_results:bool=True, progress:bool=True):
     """
     To complete
     """
 
-    #Parameterize the experiment
+    reflection_tab = np.zeros(len(n_tab))
 
-    omega_A = 10*pi
-    Gamma = pi
-    reflection_tab = np.zeros(len(ir_tab))
+    for i in tqdm(range(len(n_tab)), disable=not progress):
 
-    for i in tqdm(range(len(ir_tab)), disable=not progress):
+        #Try to get the bare parameters
+        try:
+            omega_0, gamma = get_bare_param_n(param_cavity_physical['omega_A'], 
+                                              param_cavity_physical['Gamma'], 
+                                              cutoffs['ir_cutoff'], 
+                                              cutoffs['uv_cutoff'], 
+                                              n=n_tab[i])
 
-        #Frequency window
-        cutoffs = {'ir_cutoff': ir_tab[i] , 'uv_cutoff': uv_tab[i]}
+            #Parameters of the simulation
+            param_cavity = {'omega_0': omega_0, 'gamma': gamma, 'L': param_cavity_physical['L']}
 
-        #Sanity check
-        if omega_q < cutoffs['ir_cutoff'] or omega_q > cutoffs['uv_cutoff'] :
-            print("WARNING : The photon frequency is not included in the frequency window. Returning NaN")
-            reflection_tab[i] = np.nan
-        
-        else:
-            #Bare parameters
-            try:
-                omega_0, gamma = get_bare_param_n(omega_A, Gamma, ir_tab[i], uv_tab[i], n=n)
-
-                #Parameters of the simulation
-                L = 50
-
-                param_cavity = {'omega_0': omega_0, 'gamma': gamma, 'L': L}
-
-                param_time_evol = {'T': L/2, 'dt': 0.01}
-
-                param_photon = {'omega_p': omega_q, 'delta_k': 0.05*np.pi, 'x_0': -L/4}  
-
-                #Run the scattering experiment
-                config = ExperimentConfig(param_photon=param_photon,
-                                        param_cavity=param_cavity,
-                                        param_time_evol=param_time_evol,
-                                        cutoffs=cutoffs)
+            #Run the scattering experiment
+            config = ExperimentConfig(param_photon=param_photon,
+                                      param_cavity=param_cavity,
+                                      param_time_evol=param_time_evol,
+                                      cutoffs=cutoffs)
                 
-                experiment = Experiment(config)
-                experiment.propagate_state(progress=False)
+            experiment = Experiment(config)
+            experiment.propagate_state(progress=False)
 
-                #Compute the coindicence only at final time to save computational resources
-                _, _, Rn_array = experiment.compute_observables()
+            #Compute the reflection
+            _, _, Rn_array = experiment.compute_observables()
 
-                reflection_tab[i] = Rn_array[-1] 
+            reflection_tab[i] = Rn_array[-1]
 
-                del experiment
+            del experiment
 
-            except Exception:
-                print("WARNING : Bare parameters not found. Returning NaN")
-                reflection_tab[i] = np.nan
+        except Exception:
+            print("WARNING : Bare parameters not found. Returning NaN")
+            reflection_tab[i] = np.nan
 
     if store_results:
-        data_to_save = {'ir_tab': ir_tab, 'uv_tab': uv_tab, 'reflection_tab': reflection_tab}
+        data_to_save = {'n_tab': n_tab, 'reflection_tab': reflection_tab}
         df = pd.DataFrame(data_to_save)
-        df.to_csv(project_root / 'single_photon_renormalization' / 'results' / 'csv_files' / f'reflection_vs_n{n}_ir{int(ir_tab[0]/pi)}_{index_omega_q}.csv', index=False)
+        df.to_csv(project_root / 'single_photon_renormalization' /'results' / 'csv_files' / f'coincidence_vs_n_omega_{index_omega_q}_window_{index_experiment}.csv', index=False)
     
-    return ir_tab, uv_tab, reflection_tab
+    return n_tab, reflection_tab

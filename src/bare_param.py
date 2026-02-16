@@ -119,42 +119,71 @@ def get_bare_param_n(omega_A, Gamma, ir, uv, n=1):
         gamma = Gamma
 
     else:
-        #create the tab with the coefficients
-        def error_function(vars):
+        def F(omega_0_guess, gamma_guess):
+            #Store the alpha coeffcients
+            polynom_tab = np.zeros(n+1, dtype=complex)
 
-            omega_0_guess, gamma_guess = vars
-            #Create the polynom 
-            alpha_tab = np.zeros(n+1, dtype=complex)
-            alpha_tab[0] = -gamma_guess/2 + 1j*gamma_guess/(2*pi)*np.log((uv-omega_0_guess)/(omega_0_guess - ir))
+            X = (1j* (omega_0_guess - omega_A) - Gamma/2)
+
+            polynom_tab[0] = -gamma_guess/2 + 1j*gamma_guess/(2*pi)*np.log(np.abs((uv-omega_0_guess)/(omega_0_guess - ir)))
 
             for i in range(1, n+1):
-                alpha_tab[i] = -np.exp(1j*(i-1)*pi/2) * gamma_guess / (2*i*pi) * \
-                            (1/(ir - omega_0_guess)**i - 1/(uv - omega_0_guess)**i)
+                #Runing dummy tests here : this is not the analytical experssion I've found
+                polynom_tab[i] = (-1j)**(i-1) * gamma_guess / (2*i*pi) * \
+                                ((omega_0_guess - ir)**(-i) + (-1)**(i-1) * (uv - omega_0_guess)**(-i)) \
+                                * X**i
 
-            alpha_tab[1] -= 1
-            
-            roots = np.roots(alpha_tab[::-1])
+            error_term = np.sum(polynom_tab) - X
 
-            #Choose the root closer to the expected result
-            r = min(roots, key=lambda x: np.abs(x + Gamma/2 - 1j*(omega_0_guess - omega_A)))
-            
-            # error term
-            error = r + Gamma/2 - 1j*(omega_0_guess - omega_A)
-
-            return [np.real(error), np.imag(error)]
+            return error_term
         
-        try:
-            initial_guess = get_bare_param_n1(omega_A, Gamma, ir, uv)
-            sol = root(error_function, initial_guess, tol=1e-10)
-            
-            if not sol.success:
-                print("WARNING : Bare parameters search failed. Returning the n=1 solution.")
-                omega_0, gamma = initial_guess
-            else:
-                omega_0, gamma = sol.x
+        def F_real(vars):
+            omega_0, gamma = vars
+            val = F(omega_0, gamma)
+            return [val.real, val.imag]
 
-        except Exception:
-            raise print("WARNING : Initial guess for the bare parameters failed.")
+        initial_guess = get_bare_param_n1(omega_A, Gamma, ir, uv)
+        sol = root(F_real, initial_guess, tol=1e-10)
             
+        omega_0, gamma = sol.x
+
+    return omega_0, gamma
+
+
+def get_bare_param(omega_A, Gamma, ir, uv):
+    """
+    Computes the bare parameters by inverting the renormalization relations
+    (omega_0, gamma) = F(omega_A, Gamma, omega_ref, lbda)
+    
+    Parameters:
+    omega_A : physical transition frequency of the TLS
+    Gamma : physical decay rate of the TLS
+    ir: infrared cutoff of the spectral density
+    uv: ultraviolet cutoff of the spectral density
+
+    Returns:
+    omega_0 : bare frequency to parameterize the Hamiltonian
+    gamma : bare decay rate to parameterize the Hamiltonian
+    """
+    def F_full(omega_0_guess, gamma_guess):
+        #Store the alpha coeffcients
         
+        X = 1j*(omega_0_guess - omega_A) - Gamma/2
+
+        error_term = - gamma_guess/2 + 1j*gamma_guess/(2*pi) * np.log((uv - omega_0_guess)/(omega_0_guess - ir)) \
+                    + 1j * gamma_guess/(2*pi) * np.log(1 - 1j*X/(uv - omega_0_guess)) \
+                    - 1j * gamma_guess/(2*pi) * np.log(1 + 1j*X/(omega_0_guess - ir)) \
+                    - X
+                    
+        return error_term
+
+    def F_real_full(vars):
+        omega_0, gamma = vars
+        val = F_full(omega_0, gamma)
+        return [val.real, val.imag]
+
+    initial_guess = get_bare_param_n1(omega_A, Gamma, ir, uv)
+    sol = root(F_real_full, initial_guess, tol=1e-10)
+    omega_0, gamma = sol.x
+
     return omega_0, gamma
