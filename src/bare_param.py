@@ -169,12 +169,11 @@ def get_bare_param(omega_A, Gamma, ir, uv):
         #Store the alpha coeffcients
         
         X = 1j*(omega_0_guess - omega_A) - Gamma/2
-
-        error_term = - gamma_guess/2 + 1j*gamma_guess/(2*pi) * np.log((uv - omega_0_guess)/(omega_0_guess - ir)) \
-                    + 1j * gamma_guess/(2*pi) * np.log(1 - 1j*X/(uv - omega_0_guess)) \
-                    - 1j * gamma_guess/(2*pi) * np.log(1 + 1j*X/(omega_0_guess - ir)) \
-                    - X
-                    
+        a = 1j*(ir - omega_0_guess)
+        b = 1j*(uv - omega_0_guess)
+        
+        error_term = X -1j*gamma_guess/(2*pi) * np.log(X+a) + 1j*gamma_guess/(2*pi) * np.log(X+b) 
+            
         return error_term
 
     def F_real_full(vars):
