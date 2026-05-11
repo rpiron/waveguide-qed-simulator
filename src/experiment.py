@@ -24,7 +24,7 @@ class Experiment:
         self.messages = {}
 
         #Frequency modes array assoiciated with the experiment
-        omega_tab_half = np.array([2*np.pi*n/self.param_cavity['L'] for n in range(1000000) \
+        omega_tab_half = np.array([2*np.pi*n/self.param_cavity['L'] for n in range(-1000000,1000000) \
                                    if (2*np.pi*n/self.param_cavity['L'] <= self.uv_cutoff and \
                                        2*np.pi*n/self.param_cavity['L'] >= self.ir_cutoff)])
         
@@ -41,7 +41,7 @@ class Experiment:
         self.Tn_array = np.zeros(int(self.param_time_evol['T']/self.param_time_evol['dt']), dtype=float)
 
         #test monochromatic limit
-        if self.param_photon['delta_k'] / (self.param_cavity['gamma'] / 2) > 0.1:
+        if self.param_photon['delta_k'] / (self.param_cavity['gamma_0'] / 2) > 0.1:
             self.messages['monochromatic_limit'] = "Warning: The photon wavepacket is not in the monochromatic limit."
     
     def check_parameters(self):

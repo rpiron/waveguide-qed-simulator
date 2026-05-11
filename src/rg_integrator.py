@@ -17,12 +17,12 @@ def increment_state(c,b,omega_tab,param_cavity,param_time_evol, t):
     b_new (float): Updated atomic coefficient.
     """
     omega_0 = param_cavity['omega_0']
-    gamma = param_cavity['gamma']
+    gamma_0 = param_cavity['gamma_0']
     L = param_cavity['L']
 
     dt = param_time_evol['dt']
 
-    V_matrix = -1j * np.sqrt(gamma / (2*L)) * np.exp(1j * (omega_tab - omega_0) * t)
+    V_matrix = -1j * np.sqrt(gamma_0 / (2*L)) * np.exp(1j * (omega_tab - omega_0) * t)
 
     c_new = b * V_matrix
     b_new = c @ np.conjugate(V_matrix)
