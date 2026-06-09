@@ -59,8 +59,8 @@ def run_reflection_vs_frequency(param_photon_bis, param_cavity, param_time_evol,
         data_to_save = {'photon_frequency_tab': frequency_values, 'final_reflection_tab': final_reflection_tab}
         df = pd.DataFrame(data_to_save)
         if correction:
-            df.to_csv(project_root / 'single_photon_renormalization' / 'results' / 'csv_files' /f'reflection_vs_frequency_{index_experiment}_corrected.csv', index=False)
+            df.to_csv(project_root / 'single_photon_renormalization' / 'results' / 'csv_files' /'reflection_vs_frequency' /f'reflection_vs_frequency_{index_experiment}_corrected.csv', index=False)
         else:
-            df.to_csv(project_root / 'single_photon_renormalization' / 'results' / 'csv_files' /f'reflection_vs_frequency_{index_experiment}_uncorrected.csv', index=False)
+            df.to_csv(project_root / 'single_photon_renormalization' / 'results' / 'csv_files' / 'reflection_vs_frequency' /f'reflection_vs_frequency_{index_experiment}_uncorrected.csv', index=False)
 
     return frequency_values, final_reflection_tab
