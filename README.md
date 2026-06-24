@@ -2,66 +2,101 @@
 
 ## Overview
 
-This repository contains the code used to generate the results presented in the paper  
-**Renormalization Treatment of IR and UV Cutoffs in Waveguide QED and Implications to Numerical Model Simulation**.
+This repository contains a minimal momentum-space simulator for one-photon
+light-matter scattering. The core code in `src/` now supports:
 
-The core of the project is the `Experiment` class, which simulates single-photon scattering events on a two-level system (TLS).  
-Experiments are primarily driven from Jupyter notebooks, which are used both to generate the data and to visualize the results.
+- one or two spatial dimensions;
+- arbitrary periodic box lengths `L_1, ..., L_d`;
+- one or several atoms with positions `r_j`, bare frequencies `Omega_j`, and
+  continuum couplings `g_j`;
+- vacuum dispersion `omega_p = ||p||`;
+- RK4 propagation in the single-excitation sector.
 
-Users may either reproduce the simulations from scratch or load the pre-generated CSV data to reproduce the figures directly from the notebooks.
-*All simulations were run using the Conda environment provided in `environment.yml`.*
+The `benchmark_model/` folder keeps the one-dimensional single-atom benchmark
+used in `main_tqe.pdf`, including its cutoff-renormalization helper and the
+existing script/notebook/results workflow.
 
-## Project structure
+## Project Structure
 
 ```text
 .
 ├── src/
-│   ├── __init__.py
-│   ├── experiment.py                  # Definition of the Experiment class
-│   ├── rk_integrator.py               # Runge–Kutta integrator for the Schrödinger equation
-│   └── experiment_config.py           # Configuration associated with the Experiment class
-├── single_photon_renormalization/
+│   ├── experiment.py       # Experiment class: modes, states, observables
+│   ├── rk_integrator.py    # RK4 propagation in the one-photon sector
+│   └── xp_config.py        # ExperimentConfig dataclass
+├── benchmark_model/
 │   ├── scripts_experiments/
-│   │   ├── reflection_convergence.py      # Reflection coefficient at bare resonance vs UV cutoff
-│   │   ├── reflection_vs_frequency.py     # Reflection vs photon frequency for different frequency windows
-│   │   └── reflection_vs_rk_steps.py      # Convergence of reflection vs number of Runge–Kutta steps
 │   ├── notebooks/
-│   │   ├── experiment_class_example.ipynb          # Results for Fig. 2 
-│   │   ├── reflection_convergence_results.ipynb    # Results for Fig. 3 
-│   │   ├── reflection_vs_frequency_results.ipynb   # Results for Figs. 4 and 5 
-│   │   └── reflection_vs_rgstep_results.ipynb      # Results for Fig. 7
-│   ├── results/
-│   │   ├── csv_files/   # Pre-generated CSV data from scripts_experiments
-│   │   └── figures/     # Figures presented in the paper
-├── environment.yml
-└── README.md
-
+│   └── results/
+├── 2d_setup/               # 2D fiber geometry experiments
+│   ├── geometries/          # Saved atomic-interface CSV geometries
+│   ├── notebooks/
+│   └── results/
+├── timedomain_cross_validation/
+├── main_tqe.pdf
+└── environment.yml
 ```
 
-## How to use
+## Minimal Usage
 
-### 1. Clone the repository
-```bash
-git clone https://github.com/rpiron/waveguide-qed-simulator.git
-cd waveguide-qed-simulator
-```
-### 2. Create the Conda environment
-This will install all required dependencies (Python, NumPy, SciPy, Jupyter, etc.) in a reproducible environment.
-```bash
-conda env create -f environment.yml
-conda activate single-photon-renorm
-```
-### 3. Launch Jupyter lab
-```bash
-jupyter lab
-```
-Then, navigate to
-```bash
-single_photon_renormalization/notebooks/
+```python
+import numpy as np
+
+from src.xp_config import ExperimentConfig
+from src.experiment import Experiment
+
+Omega = 10 * np.pi
+g = np.sqrt(np.pi / 2)
+
+config = ExperimentConfig(
+    dimension=1,
+    lengths=[50],
+    atom_positions=[0.0],
+    atom_frequencies=[Omega],
+    atom_couplings=[1j * g],
+    photon={"omega_p": Omega, "delta_k": 0.05 * np.pi, "x_0": -12.5},
+    time={"T": 25, "dt": 0.01},
+    cutoffs={"ir_cutoff": 7 * np.pi, "uv_cutoff": 13 * np.pi},
+)
+
+experiment = Experiment(config)
+experiment.propagate_state(progress=True)
+atom_pop, transmitted, reflected = experiment.compute_observables()
 ```
 
-## Associated paper
-Each notebook reproduces one or more figures of the associated paper.
-[arXiv:2601.15945](https://arxiv.org/abs/2601.15945)
+For 2D, use `dimension=2`, two box lengths, 2D atom positions, and a photon
+direction:
 
+```python
+photon = {
+    "omega_p": Omega,
+    "delta_k": 0.2,
+    "position": [-10, 0],
+    "direction": [1, 0],
+}
+```
 
+## Benchmark Workflow
+
+The benchmark scripts keep their historical public signatures and can still be
+driven from notebooks:
+
+```python
+from benchmark_model.scripts_experiments.reflection_vs_frequency import (
+    run_reflection_vs_frequency,
+)
+```
+
+Generated CSV files are stored under `benchmark_model/results/csv_files/`.
+
+## 2D Fiber Setup
+
+Use `2d_setup/notebooks/geometry_creation.ipynb` to generate and save a matter
+interface CSV, then load it from
+`2d_setup/notebooks/experiment_class_example_2d.ipynb` before choosing the bath,
+wavepacket, and RK parameters.
+
+## Environment
+
+The simulations were developed for the Conda environment described in
+`environment.yml`.
